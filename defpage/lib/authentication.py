@@ -1,9 +1,12 @@
 import json
+import base64
 import httplib2
 from zope.interface import Interface
 from zope.interface import Attribute
 from zope.interface import implementer
+from pyramid.security import authenticated_userid
 from pyramid.interfaces import IAuthenticationPolicy
+from pyramid.httpexceptions import HTTPUnauthorized
 from defpage.lib.exceptions import ServiceCallError
 
 def authenticate(event):
@@ -52,7 +55,7 @@ class UserBase(object):
         pass
 
 @implementer(IAuthenticationPolicy)
-class AuthenticationPolicy(object):
+class SessionAuthenticationPolicy(object):
 
     def authenticated_userid(self, request):
         user = request.registry.getUtility(IUser)
@@ -69,3 +72,34 @@ class AuthenticationPolicy(object):
 
     def forget(self, request):
         return []
+
+@implementer(IAuthenticationPolicy)
+class BasicAuthenticationPolicyBase(object):
+
+    def extract_credentials(self, request):
+        h = request.headers.get("authorization")
+        if h.startswith("basic "):
+            credentials = h.split()[-1]
+            return base64.b64decode(credentials).split(":")
+
+    def authenticated_userid(self, request):
+        raise NotImplementedError
+
+    def unauthenticated_userid(self, request):
+        return self.extract_credentials(request)
+
+    def effective_principals(self, request):
+        return [self.authenticated_userid(request)]
+
+    def remember(self, request, principal, email):
+        return []
+
+    def forget(self, request):
+        return []
+
+def authenticated(func):
+    def wrapper(req):
+        if authenticated_userid(req):
+            raise HTTPUnauthorized
+        return func(req)
+    return wrapper
