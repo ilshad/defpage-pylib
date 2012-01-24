@@ -5,7 +5,6 @@ from zope.interface import Attribute
 from zope.interface import implementer
 from pyramid.interfaces import IAuthenticationPolicy
 from defpage.lib.exceptions import ServiceCallError
-from defpage.lib.interfaces import IUser
 
 def authenticate(event):
     user = event.request.registry.getUtility(IUser)
