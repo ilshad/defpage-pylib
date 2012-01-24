@@ -1,19 +1,34 @@
 import json
 import httplib2
+from zope.interface import Interface
+from zope.interface import Attribute
 from zope.interface import implementer
 from pyramid.interfaces import IAuthenticationPolicy
 from defpage.lib.exceptions import ServiceCallError
+from defpage.lib.interfaces import IUser
 
 def authenticate(event):
     user = event.request.registry.getUtility(IUser)
     user.authenticate(event.request)
 
+class IUser(Interface):
+    """User info for authenticated user.
+    """
+
+    authenticated = Attribute("Boolean")
+
+    user_id = Attribute("User id")
+
+    def authenticate(request):
+        """Update attributes in new request"""
+
+@implementer(IUser)
 class UserBase(object):
 
     authenticated = False
     user_id = None
 
-    def authenticate(self, request, cookie_name, session_url):
+    def authenticate(self, request, cookie_name, sessions_url):
         key = request.cookies.get(cookie_name)
         if key:
             url = sessions_url + key
@@ -23,18 +38,18 @@ class UserBase(object):
                 info = json.loads(content)
                 self.user_id = info['user_id']
                 self.authenticated = True
-                self._auhenticated(request, info)
+                self._authenticated(request, info)
                 return
             elif response.status != 404:
                 raise ServiceCallError
         self.authenticated = False
         self.user_id = None
-        self._unauhenticated(request, info)
+        self._unauthenticated(request)
 
     def _authenticated(self, request, info):
         pass
 
-    def _unauthenticated(self, request, info):
+    def _unauthenticated(self, request):
         pass
 
 @implementer(IAuthenticationPolicy)
