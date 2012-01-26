@@ -14,10 +14,6 @@ from pyramid.interfaces import IAuthenticationPolicy
 from pyramid.httpexceptions import HTTPUnauthorized
 from defpage.lib.exceptions import ServiceCallError
 
-def authenticate(event):
-    user = event.request.registry.getUtility(IUser)
-    user.authenticate(event.request)
-
 def authenticated(func):
     def wrapper(req):
         if not authenticated_userid(req):
@@ -25,59 +21,32 @@ def authenticated(func):
         return func(req)
     return wrapper
 
-class IUser(Interface):
-    """User info for authenticated user.
-    """
-
-    authenticated = Attribute("Boolean")
-
-    user_id = Attribute("User id")
-
-    def authenticate(request):
-        """Update attributes in new request"""
-
-@implementer(IUser)
-class UserBase(object):
-
-    authenticated = False
-    user_id = None
-
-    def authenticate(self, request, cookie_name, sessions_url):
-        key = request.cookies.get(cookie_name)
-        if key:
-            url = sessions_url + key
-            h = httplib2.Http()
-            response, content = h.request(url)
-            if response.status == 200:
-                info = json.loads(content)
-                self.user_id = info['user_id']
-                self.authenticated = True
-                self._authenticated(request, info)
-                return
-            elif response.status != 404:
-                raise ServiceCallError
-        self.authenticated = False
-        self.user_id = None
-        self._unauthenticated(request)
-
-    def _authenticated(self, request, info):
-        pass
-
-    def _unauthenticated(self, request):
-        pass
+def get_user_info(request, cookie_name, sessions_url):
+    info = {"authenticated":False}
+    key = request.cookies.get(cookie_name)
+    if key:
+        h = httplib2.Http()
+        r, c = h.request(sessions_url + key)
+        if r.status == 200:
+            info.update(json.loads(c))
+            info["authenticated"] = True
+        elif r.status != 404:
+            raise ServiceCallError
+    return info
 
 @implementer(IAuthenticationPolicy)
-class SessionAuthenticationPolicy(object):
+class UserInfoAuthenticationPolicy(object):
 
     def authenticated_userid(self, request):
-        user = request.registry.getUtility(IUser)
-        return user.user_id
+        return request.user.get("user_id", None)
 
     def unauthenticated_userid(self, request):
         return None
 
     def effective_principals(self, request):
-        return [self.authenticated_userid(request)]
+        if request.user["authenticated"]:
+            return [request.user["user_id"], Authenticated, Everyone]
+        return [Everyone]
 
     def remember(self, request, principal, email):
         return []
@@ -105,23 +74,6 @@ def _get_basicauth_credentials(request):
 
 @implementer(IAuthenticationPolicy)
 class BasicAuthenticationPolicy(object):
-    """ A :app:`Pyramid` :term:`authentication policy` which
-    obtains data from basic authentication headers.
-
-    Constructor Arguments
-
-    ``check``
-
-        A callback passed the credentials and the request,
-        expected to return None if the userid doesn't exist or a sequence
-        of group identifiers (possibly empty) if the user does exist.
-        Required.
-
-    ``realm``
-
-        Default: ``Realm``.  The Basic Auth realm string.
-
-    """
 
     def __init__(self, check, realm='Realm'):
         self.check = check
