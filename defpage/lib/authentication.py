@@ -21,18 +21,26 @@ def authenticated(func):
         return func(req)
     return wrapper
 
+class User:
+
+    authenticated = False
+    userid = None
+    email = None
+
 def get_user_info(request, cookie_name, sessions_url):
-    info = {"authenticated":False}
+    user = User()
     key = request.cookies.get(cookie_name)
     if key:
         h = httplib2.Http()
         r, c = h.request(sessions_url + key)
         if r.status == 200:
-            info.update(json.loads(c))
-            info["authenticated"] = True
+            info = json.loads(c)
+            user.userid = info["user_id"]
+            user.email = info["email"]
+            user.authenticated = True
         elif r.status != 404:
             raise ServiceCallError
-    return info
+    return user
 
 @implementer(IAuthenticationPolicy)
 class UserInfoAuthenticationPolicy(object):
