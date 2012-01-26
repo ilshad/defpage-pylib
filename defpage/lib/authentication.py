@@ -46,14 +46,14 @@ def get_user_info(request, cookie_name, sessions_url):
 class UserInfoAuthenticationPolicy(object):
 
     def authenticated_userid(self, request):
-        return request.user.get("user_id", None)
+        return request.user.userid
 
     def unauthenticated_userid(self, request):
         return None
 
     def effective_principals(self, request):
-        if request.user["authenticated"]:
-            return [request.user["user_id"], Authenticated, Everyone]
+        if request.user.authenticated:
+            return [request.user.user_id, Authenticated, Everyone]
         return [Everyone]
 
     def remember(self, request, principal, email):
