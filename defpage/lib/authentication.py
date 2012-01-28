@@ -53,7 +53,7 @@ class UserInfoAuthenticationPolicy(object):
 
     def effective_principals(self, request):
         if request.user.authenticated:
-            return [request.user.user_id, Authenticated, Everyone]
+            return [request.user.userid, Authenticated, Everyone]
         return [Everyone]
 
     def remember(self, request, principal, email):
