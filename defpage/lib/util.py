@@ -1,8 +1,6 @@
 import json
 import random
 import string
-import time
-from datetime import datetime
 
 def random_string(length):
     chars = []
