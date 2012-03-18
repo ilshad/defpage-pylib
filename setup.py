@@ -9,7 +9,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
     'pyramid',
-    'WebError',
+    'Paste',
     ]
 
 if sys.version_info[:3] < (2,5,0):
