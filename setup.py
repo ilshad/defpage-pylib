@@ -29,6 +29,5 @@ setup(name='defpage.lib',
       entry_points = """\
       [paste.app_factory]
       main = defpage.lib:main
-      """,
-      paster_plugins=['pyramid'],
+      """
       )
