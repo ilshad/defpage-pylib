@@ -1,6 +1,6 @@
-======================
-defpage.com shared lib
-======================
+==================
+defpage shared lib
+==================
 
 This is shared python library to avoid doublication code in Python + Pyramid
 based defpage servers.
@@ -10,7 +10,7 @@ Deploy
 
 Get package:
 
-  $ git clone git@spacta.com:defpage/pylib.git
+  $ git clone git@github.com:astoon/defpage-pylib.git
   $ cd pylib
 
 Install it in the environments you need:
