@@ -10,7 +10,7 @@ Deploy
 
 Get package:
 
-  $ git clone git@github.com:astoon/defpage-pylib.git
+  $ git clone git@github.com:ilshad/defpage-pylib.git
   $ cd pylib
 
 Install it in the environments you need:
